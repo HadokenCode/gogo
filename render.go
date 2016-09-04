@@ -88,9 +88,6 @@ func (render *HashRender) Render(v interface{}) error {
 		render.response.WriteHeader(scr.StatusCode())
 	}
 
-	// reset hash
-	render.hash.Reset()
-
 	// using bytes.Buffer for efficient I/O
 	var bbuf *bytes.Buffer
 
@@ -118,6 +115,7 @@ func (render *HashRender) Render(v interface{}) error {
 	}
 
 	// add etag header
+	render.hash.Reset()
 	render.hash.Write(bbuf.Bytes())
 	render.response.Header().Add("Etag", hex.EncodeToString(render.hash.Sum(nil)))
 
