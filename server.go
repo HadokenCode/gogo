@@ -14,22 +14,19 @@ import (
 type AppServer struct {
 	*AppRoute
 
-	mode    RunMode
+	config  *AppConfig
 	handler Handler
+	logger  Logger
 	pool    sync.Pool
 
-	throttle *time.Ticker  // time.Ticker for rate limit
-	slowdown time.Duration // cache for performance
-
-	config       *AppConfig
-	logger       Logger
-	requestId    string   // request id header name
-	filterParams []string // filter out params when logging
+	throttle     *time.Ticker  // time.Ticker for rate limit
+	slowdown     time.Duration // cache for performance
+	requestId    string        // request id header name
+	filterParams []string      // filter out params when logging
 }
 
-func NewAppServer(mode RunMode, config *AppConfig, logger Logger) *AppServer {
+func NewAppServer(config *AppConfig, logger Logger) *AppServer {
 	server := &AppServer{
-		mode:      mode,
 		config:    config,
 		logger:    logger,
 		requestId: DefaultHttpRequestId,
@@ -54,7 +51,7 @@ func NewAppServer(mode RunMode, config *AppConfig, logger Logger) *AppServer {
 
 // Mode returns run mode of the app server
 func (s *AppServer) Mode() string {
-	return string(s.mode)
+	return string(s.config.Mode)
 }
 
 // Config returns app config of the app server

@@ -15,7 +15,7 @@ var (
 		config, _ := newMockConfig("application.json")
 		logger := NewAppLogger(config.Section().Logger.Output, "")
 
-		return NewAppServer("test", config, logger)
+		return NewAppServer(config, logger)
 	}
 )
 

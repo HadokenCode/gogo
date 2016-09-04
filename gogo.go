@@ -53,7 +53,7 @@ func New(runMode, srcPath string) *AppServer {
 
 	logger.Printf("Initialized %s in %s mode", config.Name, config.Mode)
 
-	return NewAppServer(config.Mode, config, logger)
+	return NewAppServer(config, logger)
 }
 
 // NewWithLogger creates application server with provided Logger
@@ -70,5 +70,5 @@ func NewWithLogger(runMode, srcPath string, logger Logger) *AppServer {
 
 	logger.Printf("Initialized %s in %s mode", config.Name, config.Mode)
 
-	return NewAppServer(config.Mode, config, logger)
+	return NewAppServer(config, logger)
 }
