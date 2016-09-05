@@ -278,12 +278,12 @@ func (t *TestGroupController) Show(ctx *Context) {
 
 type TestUserController struct{}
 
-func (t *TestUserController) Show(ctx *Context) {
-	ctx.Text(ctx.Params.Get("id") + ":" + ctx.Params.Get("user") + "show")
-}
-
 func (t *TestUserController) Id() string {
 	return "user"
+}
+
+func (t *TestUserController) Show(ctx *Context) {
+	ctx.Text(ctx.Params.Get("group") + ":" + ctx.Params.Get("user") + "show")
 }
 
 func Test_ResourceController(t *testing.T) {
@@ -305,7 +305,7 @@ func Test_ResourceController(t *testing.T) {
 
 	assertion.Equal("6666show", string(body))
 
-	// test user show /group/:id/user/:user
+	// test user show /group/:group/user/:user
 	group.Resource("user", &TestUserController{})
 	res, err = http.Get(ts.URL + "/group/6666/user/82828")
 	assertion.Nil(err)
