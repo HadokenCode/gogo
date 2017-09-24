@@ -16,6 +16,7 @@ type AppServer struct {
 
 	mode    RunMode
 	handler Handler
+	macid   *Macid
 	pool    sync.Pool
 
 	throttle *time.Ticker  // time.Ticker for rate limit
@@ -30,6 +31,7 @@ type AppServer struct {
 func NewAppServer(mode RunMode, config *AppConfig, logger Logger) *AppServer {
 	server := &AppServer{
 		mode:      mode,
+		macid:     NewMacid(),
 		config:    config,
 		logger:    logger,
 		requestId: DefaultHttpRequestId,
@@ -184,7 +186,7 @@ func (s *AppServer) new(w http.ResponseWriter, r *http.Request, params *AppParam
 	// adjust request id
 	requestId := r.Header.Get(s.requestId)
 	if requestId == "" {
-		requestId = NewObjectId().Hex()
+		requestId = s.macid.New().Hex()
 
 		// inject request header with new request id
 		r.Header.Set(s.requestId, requestId)
