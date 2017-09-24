@@ -45,8 +45,8 @@ type ResponseFilter func(w Responser, b []byte) []byte
 
 // Logger defines interface of application log apis.
 type Logger interface {
-	New(requestId string) Logger
-	RequestId() string
+	New(requestID string) Logger
+	RequestID() string
 	SetLevelByName(level string) error
 	SetColor(color bool)
 

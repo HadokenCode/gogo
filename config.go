@@ -12,7 +12,7 @@ var (
 		Addr:      "127.0.0.1",
 		Port:      9090,
 		Ssl:       false,
-		RequestId: DefaultHttpRequestId,
+		RequestID: DefaultHttpRequestID,
 	}
 
 	DefaultLoggerConfig = &LoggerConfig{
@@ -118,7 +118,7 @@ type ServerConfig struct {
 
 	Throttle   int    `json:"throttle"`    // in time.Second/throttle ms
 	SlowdownMs int    `json:"slowdown_ms"` // in ms
-	RequestId  string `json:"request_id"`
+	RequestID  string `json:"request_id"`
 }
 
 // logger config spec

@@ -24,7 +24,7 @@ type AppServer struct {
 
 	config       *AppConfig
 	logger       Logger
-	requestId    string   // request id header name
+	requestID    string   // request id header name
 	filterParams []string // filter out params when logging
 }
 
@@ -34,7 +34,7 @@ func NewAppServer(mode RunMode, config *AppConfig, logger Logger) *AppServer {
 		macid:     NewMacid(),
 		config:    config,
 		logger:    logger,
-		requestId: DefaultHttpRequestId,
+		requestID: DefaultHttpRequestID,
 	}
 
 	// init Route
@@ -90,8 +90,8 @@ func (s *AppServer) Run() {
 	s.slowdown = time.Duration(config.Server.SlowdownMs) * time.Millisecond
 
 	// adjust app server request id
-	if config.Server.RequestId != "" {
-		s.requestId = config.Server.RequestId
+	if config.Server.RequestID != "" {
+		s.requestID = config.Server.RequestID
 	}
 
 	// adjust app logger filter parameters
@@ -184,20 +184,20 @@ func (s *AppServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // new returns a new context for the server
 func (s *AppServer) new(w http.ResponseWriter, r *http.Request, params *AppParams, handlers []Middleware) *Context {
 	// adjust request id
-	requestId := r.Header.Get(s.requestId)
-	if requestId == "" {
-		requestId = s.macid.New().Hex()
+	requestID := r.Header.Get(s.requestID)
+	if requestID == "" {
+		requestID = s.macid.New().Hex()
 
 		// inject request header with new request id
-		r.Header.Set(s.requestId, requestId)
+		r.Header.Set(s.requestID, requestID)
 	}
-	w.Header().Set(s.requestId, requestId)
+	w.Header().Set(s.requestID, requestID)
 
 	ctx := s.pool.Get().(*Context)
 	ctx.Request = r
 	ctx.Response = &ctx.writer
 	ctx.Params = params
-	ctx.Logger = s.logger.New(requestId)
+	ctx.Logger = s.logger.New(requestID)
 	ctx.settings = nil
 	ctx.frozenSettings = nil
 	ctx.writer.reset(w)
