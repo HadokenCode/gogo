@@ -4,8 +4,8 @@ import (
 	"testing"
 )
 
-func Test_ExampleHello(t *testing.T) {
-	testClient.Get(t, "/@getting_start/hello")
+func Test_GettingStart_Pong(t *testing.T) {
+	testClient.Get(t, "/@gogo/pong")
 
 	testClient.AssertOK()
 	testClient.AssertContains(Config.GettingStart.Greeting)

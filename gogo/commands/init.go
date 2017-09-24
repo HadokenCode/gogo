@@ -61,7 +61,7 @@ goinstall:
     go get -t -v {{.Namespace}}/{{.Application}}
 
 goreinstall:
-    go get -t -a -v {{.Namespace}}/{{.Application}}
+    go get -t -u -v {{.Namespace}}/{{.Application}}
 
 gotest:
     go test {{.Namespace}}/{{.Application}}/app/controllers
@@ -130,34 +130,13 @@ func New(runMode, srcPath string) *Application {
     return &Application{appServer}
 }
 
-// Middlerwares implements gogo.Middlewarer
-// NOTE: DO NOT change the method name, its required by gogo!
-func (app *Application) Middlewares() {
-    // apply your middlewares
-
-    // panic recovery
-    app.Use(middlewares.Recovery())
-}
-
-// Resources implements gogo.Resourcer
+// Resources overwrites gogo.Resources() methods for custom resources.
 // NOTE: DO NOT change the method name, its required by gogo!
 func (app *Application) Resources() {
     // register your resources
     // app.GET("/", handler)
 
-    app.GET("/@getting_start/hello", GettingStart.Hello)
-}
-
-// Run runs application after registering middelwares and resources
-func (app *Application) Run() {
-    // register middlewares
-    app.Middlewares()
-
-    // register resources
-    app.Resources()
-
-    // run server
-    app.AppServer.Run()
+    app.GET("/@gogo/ping", GettingStart.Pong)
 }
 `, `package controllers
 
@@ -248,8 +227,8 @@ var (
 
 type _GettingStart struct{}
 
-// @route GET /@getting_start/hello
-func (_ *_GettingStart) Hello(ctx *gogo.Context) {
+// @route GET /@gogo/ping
+func (_ *_GettingStart) Pong(ctx *gogo.Context) {
     ctx.Logger.Warnf("Visiting domain is: %s", Config.Domain)
 
     ctx.Text(Config.GettingStart.Greeting)
@@ -260,8 +239,8 @@ import (
     "testing"
 )
 
-func Test_ExampleHello(t *testing.T) {
-    testClient.Get(t, "/@getting_start/hello")
+func Test_GettingStart_Pong(t *testing.T) {
+    testClient.Get(t, "/@gogo/ping")
 
     testClient.AssertOK()
     testClient.AssertContains(Config.GettingStart.Greeting)
@@ -281,27 +260,35 @@ func Recovery() gogo.Middleware {
     return func(ctx *gogo.Context) {
         defer func() {
             if panicErr := recover(); panicErr != nil {
-                // where does panic occur? try max 20 depths
-                pcs := make([]uintptr, 20)
-                max := runtime.Callers(2, pcs)
-                for i := 0; i < max; i++ {
-                    pcfunc := runtime.FuncForPC(pcs[i])
-                    if strings.HasPrefix(pcfunc.Name(), "runtime.") {
-                        continue
-                    }
+				// where does panic occur? try max 20 depths
+				pcs := make([]uintptr, 20)
+				max := runtime.Callers(2, pcs)
+				if max == 0 {
+					ctx.Logger.Error("No pcs available.")
+				} else {
+					frames := runtime.CallersFrames(pcs[:max])
+					for {
+						frame, _ := frames.Next()
 
-                    pcfile, pcline := pcfunc.FileLine(pcs[i])
+						// To keep this example's output stable
+						// even if there are changes in the testing package,
+						// stop unwinding when we leave package runtime.
+						if strings.Contains(frame.Function, "runtime.") {
+							continue
+						}
 
-                    tmp := strings.SplitN(pcfile, "/src/", 2)
-                    if len(tmp) == 2 {
-                        pcfile = "src/" + tmp[1]
-                    }
-                    ctx.Logger.Errorf("(%s:%d: %v)", pcfile, pcline, panicErr)
+						tmp := strings.SplitN(frame.File, "/src/", 2)
+						if len(tmp) == 2 {
+							ctx.Logger.Errorf("(src/%s:%d: %v)", tmp[1], frame.Line, panicErr)
+						} else {
+							ctx.Logger.Errorf("(%s:%d: %v)", frame.File, frame.Line, panicErr)
+						}
 
-                    break
-                }
+						break
+					}
+				}
 
-                ctx.Abort()
+				ctx.Abort()
             }
         }()
 
@@ -373,11 +360,9 @@ func TestMain(m *testing.M) {
                 "addr": "localhost",
                 "port": 9090,
                 "ssl": false,
-                "ssl_cert": "/path/to/ssl/cert",
-                "ssl_key": "/path/to/ssl/key",
                 "request_timeout": 30,
                 "response_timeout": 30,
-                "request_id": "X-Request-Id"
+                "request_id": "X-Request-ID"
             },
             "logger": {
                 "output": "stdout",
@@ -395,11 +380,9 @@ func TestMain(m *testing.M) {
                 "addr": "localhost",
                 "port": 9090,
                 "ssl": false,
-                "ssl_cert": "/path/to/ssl/cert",
-                "ssl_key": "/path/to/ssl/key",
                 "request_timeout": 30,
                 "response_timeout": 30,
-                "request_id": "X-Request-Id"
+                "request_id": "X-Request-ID"
             },
             "logger": {
                 "output": "stdout",
@@ -416,12 +399,12 @@ func TestMain(m *testing.M) {
             "server": {
                 "addr": "localhost",
                 "port": 9090,
-                "ssl": true,
+                "ssl": false,
                 "ssl_cert": "/path/to/ssl/cert",
                 "ssl_key": "/path/to/ssl/key",
                 "request_timeout": 30,
                 "response_timeout": 30,
-                "request_id": "X-Request-Id"
+                "request_id": "X-Request-ID"
             },
             "logger": {
                 "output": "stdout",
@@ -430,6 +413,50 @@ func TestMain(m *testing.M) {
             }
         }
     }
+}
+`
+
+	appTemplate = `package app
+
+import (
+    "{{.Namespace}}/{{.Application}}/app/controllers"
+    "{{.Namespace}}/{{.Application}}/app/middlewares"
+)
+
+type Application struct {
+    *controllers.Application
+
+    _ bool
+}
+
+func New(runMode, srcPath string) *Application {
+    app := &Application{
+        Application: controllers.New(runMode, srcPath),
+    }
+
+    return app
+}
+
+// Middlerwares overwrites gogo.Middleware() method for custom middlewares
+// NOTE: DO NOT change the method name, its required by gogo internal!
+func (app *Application) Middlewares() {
+    // apply your middlewares
+
+    // panic recovery
+    app.Use(middlewares.Recovery())
+}
+
+// Run overwrites gogo.Run() method by registering middlewares and resources.
+// NOTE: DO NOT change the method name, its required by gogo internal!
+func (app *Application) Run() {
+    // register middlewares
+    app.Middlewares()
+
+    // register resources
+    app.Resources()
+
+    // run server
+    app.Application.Run()
 }
 `
 
@@ -442,17 +469,17 @@ import (
 
     "github.com/dolab/gogo"
 
-    "{{.Namespace}}/{{.Application}}/app/controllers"
+    "{{.Namespace}}/{{.Application}}/app"
 )
 
 var (
     runMode string // app run mode, available values are [development|test|production], default to development
-    srcPath string // app source path, e.g. /home/deploy/websites/helloapp
+    srcPath string // app config path, e.g. /home/deploy/websites/helloapp
 )
 
 func main() {
     flag.StringVar(&runMode, "runMode", "development", "{{.Application}} -runMode=[development|test|production]")
-    flag.StringVar(&srcPath, "srcPath", "", "{{.Application}} -srcPath=/path/to/source")
+    flag.StringVar(&srcPath, "srcPath", "", "{{.Application}} -srcPath=/root/to/config")
     flag.Parse()
 
     // verify run mode
@@ -473,7 +500,7 @@ func main() {
         srcPath = path.Clean(srcPath)
     }
 
-    controllers.New(runMode, srcPath).Run()
+    app.New(runMode, srcPath).Run()
 }
 `
 )

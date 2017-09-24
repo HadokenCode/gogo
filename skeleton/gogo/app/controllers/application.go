@@ -2,8 +2,6 @@ package controllers
 
 import (
 	"github.com/dolab/gogo"
-
-	"github.com/skeleton/app/middlewares"
 )
 
 type Application struct {
@@ -21,32 +19,11 @@ func New(runMode, srcPath string) *Application {
 	return &Application{appServer}
 }
 
-// Middlerwares implements gogo.Middlewarer
-// NOTE: DO NOT change the method name, its required by gogo!
-func (app *Application) Middlewares() {
-	// apply your middlewares
-
-	// panic recovery
-	app.Use(middlewares.Recovery())
-}
-
-// Resources implements gogo.Resourcer
+// Resources overwrites gogo.Resources() methods for custom resources.
 // NOTE: DO NOT change the method name, its required by gogo!
 func (app *Application) Resources() {
 	// register your resources
 	// app.GET("/", handler)
 
-	app.GET("/@getting_start/hello", GettingStart.Hello)
-}
-
-// Run runs application after registering middelwares and resources
-func (app *Application) Run() {
-	// register middlewares
-	app.Middlewares()
-
-	// register resources
-	app.Resources()
-
-	// run server
-	app.AppServer.Run()
+	app.GET("/@gogo/ping", GettingStart.Pong)
 }

@@ -39,6 +39,7 @@ var (
 	appMiddlewareTest   = template.Must(template.New("gogo").Parse(middlewareTemplate[1]))
 	appMiddlewareInit   = template.Must(template.New("gogo").Parse(middlewareTemplate[2]))
 	appJSON             = template.Must(template.New("gogo").Parse(jsonTemplate))
+	appApp              = template.Must(template.New("gogo").Parse(appTemplate))
 	appMain             = template.Must(template.New("gogo").Parse(mainTemplate))
 )
 
@@ -151,6 +152,9 @@ func (_ *_New) Action() cli.ActionFunc {
 
 		// generate default application.json
 		New.genConfigFile(path.Join(appRoot, "config", "application.json"), appName, appNamespace)
+
+		// generate app.go
+		New.genAppFile(path.Join(appRoot, "app"), appName, appNamespace)
 
 		// generate main.go
 		New.genMainFile(path.Join(appRoot, "main.go"), appName, appNamespace)
@@ -341,6 +345,22 @@ func (_ *_New) genConfigFile(file, app, namespace string) {
 	}
 
 	err = appJSON.Execute(fd, templateData{
+		Namespace:   namespace,
+		Application: app,
+	})
+	if err != nil {
+		stderr.Error(err.Error())
+	}
+}
+
+func (_ *_New) genAppFile(file, app, namespace string) {
+	fd, err := os.OpenFile(file, os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		stderr.Error(err.Error())
+		return
+	}
+
+	err = appApp.Execute(fd, templateData{
 		Namespace:   namespace,
 		Application: app,
 	})

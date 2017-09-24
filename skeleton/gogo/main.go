@@ -6,8 +6,7 @@ import (
 	"path"
 
 	"github.com/dolab/gogo"
-
-	"github.com/skeleton/app/controllers"
+	"github.com/skeleton/app"
 )
 
 var (
@@ -17,7 +16,7 @@ var (
 
 func main() {
 	flag.StringVar(&runMode, "runMode", "development", "example -runMode=[development|test|production]")
-	flag.StringVar(&srcPath, "srcPath", "", "example -srcPath=/path/to/source")
+	flag.StringVar(&srcPath, "srcPath", "", "example -srcPath=/root/to/config")
 	flag.Parse()
 
 	// verify run mode
@@ -38,5 +37,5 @@ func main() {
 		srcPath = path.Clean(srcPath)
 	}
 
-	controllers.New(runMode, srcPath).Run()
+	app.New(runMode, srcPath).Run()
 }

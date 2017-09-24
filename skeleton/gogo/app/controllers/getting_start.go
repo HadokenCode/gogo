@@ -10,8 +10,8 @@ var (
 
 type _GettingStart struct{}
 
-// @route GET /@getting_start/hello
-func (_ *_GettingStart) Hello(ctx *gogo.Context) {
+// @route GET /@gogo/ping
+func (_ *_GettingStart) Pong(ctx *gogo.Context) {
 	ctx.Logger.Warnf("Visiting domain is: %s", Config.Domain)
 
 	ctx.Text(Config.GettingStart.Greeting)
